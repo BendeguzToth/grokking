@@ -4,6 +4,7 @@ Generating algorithmic dataset for the experiments.
 
 # Standard libraries
 from typing import Callable
+import itertools
 
 # Third-party dependencies
 import torch
@@ -58,5 +59,29 @@ def divide(p: int) -> Callable[[Tensor, Tensor], Tensor]:
         for a in range(res.shape[0]):
             for b in range(1, res.shape[1]):
                 res[a, b] = (mp[b] == a).nonzero()[0, 0]
+        return res
+    return f
+
+
+def permutation_composition(S: int) -> Callable[[Tensor, Tensor], Tensor]:
+    """
+    Composition of permutations of group of size S.
+    :param S: Group size.
+    :return: A combine function to feed to create_algorithmic.
+    """
+    def f(x, y):
+        perms = list(itertools.permutations(range(S), S))
+        res = torch.zeros_like(x)
+        # Fill array in a loop.
+        for a in range(res.shape[0]):
+            for b in range(res.shape[1]):
+                # First get the permutation that is represented by the indices.
+                a_ = perms[x[a, b]]
+                b_ = perms[y[a, b]]
+                combined = []
+                for i in range(len(a_)):
+                    combined.append(b_.index(a_[i]))
+                combined = tuple(combined)
+                res[a, b] = perms.index(combined)
         return res
     return f
