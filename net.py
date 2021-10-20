@@ -23,11 +23,12 @@ class Grokformer(Module):
     """
     def __init__(self, num_embeddings: int, embedding_dim: int, device):
         super(Grokformer, self).__init__()
-        self.embedding = Embedding(num_embeddings=num_embeddings + 4, embedding_dim=embedding_dim)
+        self.embedding = Embedding(num_embeddings=num_embeddings + 4, embedding_dim=embedding_dim, device=device)
         # [0, num_embeddings] is the symbol embeddings, [num_embeddings + 1, num_embeddings + 4] is positional encodings.
         self.n_embeddings = num_embeddings + 4
         layer = TransformerEncoderLayer(d_model=128, nhead=4, dim_feedforward=512, dropout=0., batch_first=True)
         self.network = TransformerEncoder(encoder_layer=layer, num_layers=2)
+        self.network.to(device)
         # Used to index into the last five elements of self.embedding for the positional encodings.
         self.pos_idx = tensor([num_embeddings + k for k in range(4)], device=device)
         self.device = device

@@ -25,8 +25,12 @@ def create_algorithmic(size: int, combine: Callable[[Tensor, Tensor], Tensor],
     a = torch.arange(size, device=device, dtype=dtype)[..., None].repeat((1, size))
     b = torch.arange(size, device=device, dtype=dtype).repeat((size, 1))
 
+    # Add the operator and the <=> tokens.
+    op = torch.full_like(a, fill_value=size)
+    eq = torch.full_like(a, fill_value=size+1)
+
     combined = combine(a, b)
-    res = torch.stack([a, b, combined]).permute((1, 2, 0)).view((-1, 3))
+    res = torch.stack([a, op, b, eq, combined]).permute((1, 2, 0)).view((-1, 5))
     return res
 
 
@@ -56,10 +60,3 @@ def divide(p: int) -> Callable[[Tensor, Tensor], Tensor]:
                 res[a, b] = (mp[b] == a).nonzero()[0, 0]
         return res
     return f
-
-
-out = create_algorithmic(97, divide(97), torch.device("cuda:0"))
-print(out.shape)
-
-# out = create_algorithmic(5, lambda x, y: ((x+5).div(y+5, rounding_mode='trunc')) % 5, torch.device("cuda:0"))
-# print(out)
